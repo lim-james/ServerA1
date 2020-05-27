@@ -5,6 +5,8 @@ public class InventoryManager : MonoBehaviour
 {
 
     [SerializeField]
+    private ItemGroupObject itemGroup;
+    [SerializeField]
     private Inventory inventory;
     [SerializeField]
     private Color defaultColor;
@@ -18,11 +20,11 @@ public class InventoryManager : MonoBehaviour
     {
         for (int i = 0; i < inventory.size; ++i)
         {
-            Item item = inventory.items[i];
-            if (item == null)
+            int item = inventory.items[i];
+            if (item < 0)
                 slots[i].color = defaultColor;
             else 
-                slots[i].color = item.color;
+                slots[i].color = itemGroup.colors[item];
         }
     }
 

@@ -22,6 +22,8 @@ public class ChatManager : MonoBehaviour
         panel.SetActive(true);
         header.text = user;
 
+        // TODO - Get chat data
+
         chat = new List<string>();
         table.SetChat(chat);
     }

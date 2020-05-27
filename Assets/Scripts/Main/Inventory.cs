@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,17 +8,17 @@ public class Inventory : MonoBehaviour
 {
 
     [SerializeField]
-    private GameObject itemPrefab;
-    [SerializeField]
-    private Transform itemContainer;
-    [SerializeField]
     private InventoryManager manager;
+    [SerializeField]
+    private GridManager grid;
 
     private PlayerMovement movement;
 
     public int size { get; private set; }
     public int index { get; private set; }
-    public Item[] items { get; private set; }
+    public int[] items { get; private set; }
+
+    private string username;
 
     private void Awake()
     {
@@ -28,13 +29,21 @@ public class Inventory : MonoBehaviour
     private void Start()
     {
         index = 0;
+        username = AccountManager.Instance().username;
 
-        items = new Item[size];
+        items = new int[size];
         for (int i = 0; i < size; ++i)
-            items[i] = null;
+            items[i] = -1;
 
-        items[0] = new Item();
-        items[0].color = new Color(1, 0, 0, 1);
+        items[0] = 0;
+        items[1] = 1;
+
+        String sqlCmd = String.Format(
+            "SELECT item0, item1, item2, item3 from Main.Inventory WHERE username='{0}';", 
+            username
+        );
+        Debug.Log(sqlCmd);
+
         manager.ReloadData();
     }
      
@@ -64,33 +73,51 @@ public class Inventory : MonoBehaviour
             manager.UpdateIndicator();
         }
 
-        //if (Input.GetKeyDown(KeyCode.E))
-        //    Pickup();
+        if (Input.GetKeyDown(KeyCode.E))
+           Pickup();
 
         if (Input.GetKeyDown(KeyCode.Q))
             Drop();
     }
 
-    public bool Set(int index, Item item)
+    private void Pickup() 
     {
-        if (items[index] != null)
-            return false;
+        if (items[index] >= 0)
+            return;
 
-        items[index] = item;
-        return true;
+        Vector3 target = transform.position + movement.direction;
+
+        if (!grid.PickItem(target, out items[index]))
+            return;
+
+
+        String sqlCmd = String.Format(
+            "UPDATE Main.Inventory SET item{0}={1} WHERE username='{2}';", 
+            index, items[index], username
+        );
+        Debug.Log(sqlCmd);
+
+        manager.ReloadData();
     }
 
     private void Drop()
     {
-        if (items[index] != null)
+        if (items[index] < 0)
             return;
 
-        GameObject go = Instantiate(itemPrefab);
-        go.transform.position = transform.position + movement.direction;
-        go.transform.SetParent(itemContainer);
-        go.GetComponent<SpriteRenderer>().color = items[index].color;
+        Vector3 target = transform.position + movement.direction;
 
-        items[index] = null;
+        if (!grid.PlaceItem(target, items[index]))
+            return;
+
+        items[index] = -1;
+
+        // TODO - Update player inventory in db
+        String sqlCmd = String.Format(
+            "UPDATE Main.Inventory SET item{0}={1} WHERE username='{2}';", 
+            index, -1, username
+        );
+        Debug.Log(sqlCmd);
 
         manager.ReloadData();
     }

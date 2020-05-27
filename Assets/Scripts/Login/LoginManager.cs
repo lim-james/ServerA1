@@ -32,6 +32,7 @@ public class LoginManager : MonoBehaviour
 
     private bool UserExist(string username)
     {
+        // TODO - Check if user exists
         return username == "root";
     }
 

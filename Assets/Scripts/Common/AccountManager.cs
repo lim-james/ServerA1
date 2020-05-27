@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Security.Cryptography;
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,8 +39,20 @@ public class AccountManager
         }
         else
         {
-            error = "Wrong password.";
-            return false;
+            // TODO - Send to db for authentication
+            // SELECT password FROM Socials.Accounts WHERE username='james';
+            String sqlCmd = String.Format("SELECT password FROM Socials.Accounts WHERE username='{0}';", username);
+            Debug.Log(sqlCmd);
+
+            string result = "{REPLACE THIS}";
+
+            if (result == hashedPassword) {
+                error = "";
+                return true;
+            } else {
+                error = "Wrong password.";
+                return false;
+            }
         }
     }
 
@@ -47,6 +60,34 @@ public class AccountManager
     {
         error = "";
         this.username = username;
+        string hashedPassword = Hash(rawPassword);
+
+        // TODO - Send to db for authentication
+
+        // Create account 
+        // INSERT INTO Socials.Accounts(username, password) VALUES ('username', 'password');
+        String sqlCmd = String.Format("INSERT INTO Socials.Accounts(username, password) VALUES ('{0}', '{1}');", username, hashedPassword);
+        Debug.Log(sqlCmd);
+
+        // Create friend table
+        sqlCmd = String.Format(@"
+            CREATE TABLE Socials.`Friends_{0}` (
+            `index` INT NOT NULL AUTO_INCREMENT,
+            `username` VARCHAR(21) NOT NULL,
+            PRIMARY KEY (`index`),
+            UNIQUE INDEX index_UNIQUE (`index` ASC) VISIBLE);", 
+            username
+        );
+
+        Debug.Log(sqlCmd);
+        
+        // INSERT INTO Main.Inventory(username) VALUES ('username');
+        sqlCmd = String.Format("INSERT INTO Main.Inventory(username) VALUES ('{0}');", username);
+        Debug.Log(sqlCmd);
+        // INSERT INTO Main.Positions(username, x, y) VALUES ('username', 0, 0);
+        sqlCmd = String.Format("INSERT INTO Main.Positions(username, x, y) VALUES ('{0}', 0, 0);", username);
+        Debug.Log(sqlCmd);
+        
         return true;
     }
 
@@ -61,6 +102,11 @@ public class AccountManager
             error = "Can't add yourself.";
             return false;
         }
+
+        // TODO - Add user to friend list
+        // INSERT INTO Socials.Friends_username(username) VALUES ('name');
+        String sqlCmd = String.Format("INSERT INTO Socials.Friends_{0}(username) VALUES ('{1}');", username, name);
+        Debug.Log(sqlCmd);
 
         Debug.Log("Adding " + name);
         friends.Add(name);
