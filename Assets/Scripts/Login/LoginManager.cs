@@ -2,12 +2,9 @@
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-using ExitGames.Client.Photon;
-using Photon.Realtime;
-
 namespace Photon.Pun
 {
-    public class LoginManager : MonoBehaviourPun
+    public class LoginManager : MonoBehaviour
     {
         [SerializeField]
         private InputField usernameField;
@@ -35,20 +32,14 @@ namespace Photon.Pun
             messageLabel.text = message;
         }
 
-        private bool UserExist(string username)
-        {
-            // TODO - Check if user exists
-            return username == "root";
-        }
-
         private void Awake()
         {
-            PhotonNetwork.NetworkingClient.EventReceived += OnEvent;
+            AccountManager.Instance().loginHandler += LoginHandler;
         }
-
+        
         private void OnDestroy()
         {
-            PhotonNetwork.NetworkingClient.EventReceived -= OnEvent;
+            AccountManager.Instance().loginHandler -= LoginHandler;
         }
 
         private void Start()
@@ -63,22 +54,8 @@ namespace Photon.Pun
                 SceneManager.LoadScene("MainGame", LoadSceneMode.Single);
         }
 
-        private void OnEvent(EventData obj)
-        {
-            if (obj.Code == 1)
-            {
-                string data = (string)obj.CustomData;
-                Debug.Log(string.Format("Message from Server: {0}", data));
-            }
-        }
-
         public void EnterHandler()
         {
-            Debug.Log("Raised!!");
-            byte evCode = 1;
-            string name = "Jmaes";
-            PhotonNetwork.RaiseEvent(evCode, name, RaiseEventOptions.Default, SendOptions.SendReliable);
-
             enterButton.enabled = false;
 
             string username = usernameField.text;
@@ -112,23 +89,33 @@ namespace Photon.Pun
                 return;
             }
 
-            string error;
+            AccountManager.Instance().Login(username, password);
+        }
 
-            if (UserExist(username))
+        private void LoginHandler(bool success, string error)
+        {
+            if (success)
             {
-                success = AccountManager.Instance().Login(username, password, out error);
-                if (success) SetSuccess("Welcome back " + username);
+                SetSuccess("Welcome back " + AccountManager.Instance().username);
             }
             else
             {
-                success = AccountManager.Instance().Signup(username, password, out error);
-                if (success) SetSuccess("Account created. Welcome " + username);
-            }
-
-            if (!success)
-            {
                 enterButton.enabled = true;
                 SetError(error);
+            }
+        }
+
+        private void SignupHandler(bool success, string message)
+        {
+            this.success = success; 
+            if (success)
+            {
+                SetSuccess(message);
+            }
+            else
+            {
+                enterButton.enabled = true;
+                SetError(message);
             }
         }
 

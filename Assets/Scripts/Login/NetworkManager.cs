@@ -27,7 +27,7 @@ namespace Photon.Pun
             RoomOptions defaultOption = new RoomOptions();
             defaultOption.MaxPlayers = 4;
            
-            PhotonNetwork.JoinOrCreateRoom("testRoom",defaultOption,TypedLobby.Default);
+            PhotonNetwork.JoinOrCreateRoom("testRoom", defaultOption,TypedLobby.Default);
         }
     }
 }
