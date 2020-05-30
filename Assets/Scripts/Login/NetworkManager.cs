@@ -17,14 +17,17 @@ namespace Photon.Pun
 
         public override void OnConnectedToMaster()
         {
-            Debug.Log("On connected");
-            PhotonNetwork.JoinRandomRoom();
+            PhotonNetwork.JoinLobby();
+            Debug.Log("On connected");            
         }
 
-        //public override void OnJoinedLobby()
-        //{
-        //    Debug.Log("On joined");
-        //    PhotonNetwork.JoinOrCreateRoom("testRoom");
-        //}
+        public override void OnJoinedLobby()
+        {
+            Debug.Log("On joined");
+            RoomOptions defaultOption = new RoomOptions();
+            defaultOption.MaxPlayers = 4;
+           
+            PhotonNetwork.JoinOrCreateRoom("testRoom",defaultOption,TypedLobby.Default);
+        }
     }
 }
