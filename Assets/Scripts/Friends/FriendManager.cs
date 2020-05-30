@@ -1,41 +1,44 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class FriendManager : MonoBehaviour
+namespace Photon.Pun
 {
-    [SerializeField]
-    private InputField addField;
-    [SerializeField]
-    private Text addErrrorLabel;
-
-    [SerializeField]
-    private FriendTableView friendsList;
-
-    private void Start()
+    public class FriendManager : MonoBehaviour
     {
-        addField.gameObject.SetActive(false);
-        friendsList.SetFriends(AccountManager.Instance().friends);
-    }
+        [SerializeField]
+        private InputField addField;
+        [SerializeField]
+        private Text addErrrorLabel;
 
-    // handlers
+        [SerializeField]
+        private FriendTableView friendsList;
 
-    public void AddHandler()
-    {
-        string error;
-        if (AccountManager.Instance().AddUser(addField.text, out error))
+        private void Start()
         {
             addField.gameObject.SetActive(false);
-            addField.text = "";
-            friendsList.ReloadData();
+            friendsList.SetFriends(AccountManager.Instance().friends);
         }
 
-        addErrrorLabel.text = error;
-    }
+        // handlers
 
-    // button handlers     
+        public void AddHandler()
+        {
+            string error;
+            if (AccountManager.Instance().AddUser(addField.text, out error))
+            {
+                addField.gameObject.SetActive(false);
+                addField.text = "";
+                friendsList.ReloadData();
+            }
 
-    public void AddButtonHandler()
-    {
-        addField.gameObject.SetActive(true);
+            addErrrorLabel.text = error;
+        }
+
+        // button handlers     
+
+        public void AddButtonHandler()
+        {
+            addField.gameObject.SetActive(true);
+        }
     }
 }

@@ -1,36 +1,38 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-public class InventoryManager : MonoBehaviour
+namespace Photon.Pun
 {
-
-    [SerializeField]
-    private ItemGroupObject itemGroup;
-    [SerializeField]
-    private Inventory inventory;
-    [SerializeField]
-    private Color defaultColor;
-
-    [SerializeField]
-    private Image[] slots;
-    [SerializeField]
-    private Transform indicator;
-
-    public void ReloadData()
+    public class InventoryManager : MonoBehaviour
     {
-        for (int i = 0; i < inventory.size; ++i)
+
+        [SerializeField]
+        private ItemGroupObject itemGroup;
+        [SerializeField]
+        private Inventory inventory;
+        [SerializeField]
+        private Color defaultColor;
+
+        [SerializeField]
+        private Image[] slots;
+        [SerializeField]
+        private Transform indicator;
+
+        public void ReloadData()
         {
-            int item = inventory.items[i];
-            if (item < 0)
-                slots[i].color = defaultColor;
-            else 
-                slots[i].color = itemGroup.colors[item];
+            for (int i = 0; i < inventory.size; ++i)
+            {
+                int item = inventory.items[i];
+                if (item < 0)
+                    slots[i].color = defaultColor;
+                else
+                    slots[i].color = itemGroup.colors[item];
+            }
+        }
+
+        public void UpdateIndicator()
+        {
+            indicator.position = slots[inventory.index].transform.position;
         }
     }
-
-    public void UpdateIndicator()
-    {
-        indicator.position = slots[inventory.index].transform.position;
-    }
-
 }
