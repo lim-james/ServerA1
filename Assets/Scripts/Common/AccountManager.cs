@@ -22,6 +22,7 @@ namespace Photon.Pun
         public List<string> chat { get; private set; }
 
         public UnityAction<bool, string> loginHandler;
+        public UnityAction<bool, string> addHandler;
 
         AccountManager()
         {
@@ -42,9 +43,14 @@ namespace Photon.Pun
             Events e = (Events)obj.Code;
             if (e == Events.LOGIN)
             {
-                AccountResponse response = Serializer.ToObject<AccountResponse>((string)obj.CustomData);
+                Response response = Serializer.ToObject<Response>((string)obj.CustomData);
                 if (!response.success) username = "";
                 loginHandler.Invoke(response.success, response.message); 
+            } 
+            else if (e == Events.ADD_FRIEND)
+            {
+                Response response = Serializer.ToObject<Response>((string)obj.CustomData);
+                addHandler.Invoke(response.success, response.message); 
             }
         }
 
@@ -55,26 +61,25 @@ namespace Photon.Pun
             PhotonNetwork.RaiseEvent((int)Events.LOGIN, Serializer.ToString(account), RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
-        public bool AddUser(string name, out string error)
+        public void AddUser(string name)
         {
-            error = "";
             if (name == "")
-                return true;
+            {
+                addHandler.Invoke(true, "");
+                return;
+            }
 
             if (name == username)
             {
-                error = "Can't add yourself.";
-                return false;
+                addHandler.Invoke(false, "Can't add yourself.");
+                return;
             }
 
-            // TODO - Add user to friend list
-            // INSERT INTO Socials.Friends_username(username) VALUES ('name');
-            String sqlCmd = String.Format("INSERT INTO Socials.Friends_{0}(username) VALUES ('{1}');", username, name);
-            Debug.Log(sqlCmd);
+            FriendRequest request = new FriendRequest(username, name);
+            PhotonNetwork.RaiseEvent((int)Events.ADD_FRIEND, Serializer.ToString(request), RaiseEventOptions.Default, SendOptions.SendReliable);
 
             Debug.Log("Adding " + name);
             friends.Add(name);
-            return true;
         }
 
         private string Hash(string rawData)

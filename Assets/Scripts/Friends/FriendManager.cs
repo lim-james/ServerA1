@@ -13,6 +13,16 @@ namespace Photon.Pun
         [SerializeField]
         private FriendTableView friendsList;
 
+        private void Awake()
+        {
+            AccountManager.Instance().addHandler += AddFriendHandler;
+        }
+
+        private void OnDestroy()
+        {
+            AccountManager.Instance().addHandler -= AddFriendHandler;
+        }
+
         private void Start()
         {
             addField.gameObject.SetActive(false);
@@ -23,15 +33,21 @@ namespace Photon.Pun
 
         public void AddHandler()
         {
-            string error;
-            if (AccountManager.Instance().AddUser(addField.text, out error))
+            AccountManager.Instance().AddUser(addField.text);
+        }
+
+        private void AddFriendHandler(bool success, string error)
+        {
+            if (success)
             {
                 addField.gameObject.SetActive(false);
                 addField.text = "";
                 friendsList.ReloadData();
             }
-
-            addErrrorLabel.text = error;
+            else
+            {
+                addErrrorLabel.text = error;
+            }
         }
 
         // button handlers     

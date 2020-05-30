@@ -92,22 +92,9 @@ namespace Photon.Pun
             AccountManager.Instance().Login(username, password);
         }
 
-        private void LoginHandler(bool success, string error)
+        private void LoginHandler(bool success, string message)
         {
-            if (success)
-            {
-                SetSuccess("Welcome back " + AccountManager.Instance().username);
-            }
-            else
-            {
-                enterButton.enabled = true;
-                SetError(error);
-            }
-        }
-
-        private void SignupHandler(bool success, string message)
-        {
-            this.success = success; 
+            this.success = success;
             if (success)
             {
                 SetSuccess(message);
@@ -118,6 +105,5 @@ namespace Photon.Pun
                 SetError(message);
             }
         }
-
     }
 }
