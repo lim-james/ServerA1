@@ -43,22 +43,27 @@ namespace Photon.Pun
             Events e = (Events)obj.Code;
             if (e == Events.LOGIN)
             {
-                Response response = Serializer.ToObject<Response>((string)obj.CustomData);
-                if (!response.success) username = "";
-                loginHandler.Invoke(response.success, response.message); 
+                Debug.Log("Got login event");
+                object[] data = (object[])obj.CustomData;
+                bool success = (bool)data[0];
+                string message = (string)data[1];
+                if (!success) username = "";
+                loginHandler.Invoke(success, message); 
             } 
             else if (e == Events.ADD_FRIEND)
             {
-                Response response = Serializer.ToObject<Response>((string)obj.CustomData);
-                addHandler.Invoke(response.success, response.message); 
+                object[] data = (object[])obj.CustomData;
+                bool success = (bool)data[0];
+                string message = (string)data[1];
+                addHandler.Invoke(success, message); 
             }
         }
 
         public void Login(string username, string rawPassword)
         {
             this.username = username;
-            Account account = new Account(username, Hash(rawPassword));
-            PhotonNetwork.RaiseEvent((int)Events.LOGIN, Serializer.ToString(account), RaiseEventOptions.Default, SendOptions.SendReliable);
+            object[] data = new object[] { username, Hash(rawPassword) };
+            PhotonNetwork.RaiseEvent((int)Events.LOGIN, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
         public void AddUser(string name)
@@ -75,8 +80,8 @@ namespace Photon.Pun
                 return;
             }
 
-            FriendRequest request = new FriendRequest(username, name);
-            PhotonNetwork.RaiseEvent((int)Events.ADD_FRIEND, Serializer.ToString(request), RaiseEventOptions.Default, SendOptions.SendReliable);
+            object[] data = new object[] { username, name };
+            PhotonNetwork.RaiseEvent((int)Events.ADD_FRIEND, data, RaiseEventOptions.Default, SendOptions.SendReliable);
 
             Debug.Log("Adding " + name);
             friends.Add(name);

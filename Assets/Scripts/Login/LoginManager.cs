@@ -23,7 +23,7 @@ namespace Photon.Pun
         private void SetError(string message)
         {
             messageLabel.color = new Color(1, 0, 0);
-            messageLabel.text = message;
+            messageLabel.text = message;          
         }
 
         private void SetSuccess(string message)
