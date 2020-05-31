@@ -30,6 +30,8 @@ public class FriendTableView : MonoBehaviour
 
     public void ReloadData()
     {
+        Debug.Log(friends.Count);
+
         Transform[] children = content.GetComponentsInChildren<Transform>();
         for (int i = 1; i < children.Length; ++i)
             Destroy(children[i].gameObject);
@@ -43,6 +45,7 @@ public class FriendTableView : MonoBehaviour
             newCell.gameObject.SetActive(true);
             newCell.SetParent(content);
             newCell.localPosition = position;
+            newCell.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             newCell.GetComponentInChildren<Text>().text = friends[i];
         }
 

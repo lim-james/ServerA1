@@ -1,5 +1,6 @@
 ﻿enum Events : int
 {
     LOGIN = 1,
-    ADD_FRIEND
+    ADD_FRIEND,
+    GET_FRIENDS
 }

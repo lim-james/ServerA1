@@ -15,17 +15,20 @@ namespace Photon.Pun
 
         private void Awake()
         {
-            AccountManager.Instance().addHandler += AddFriendHandler;
+            AccountManager.Instance().addFriendHandler += AddFriendHandler;
+            AccountManager.Instance().getFriendsHandler += friendsList.ReloadData;
         }
 
         private void OnDestroy()
         {
-            AccountManager.Instance().addHandler -= AddFriendHandler;
+            AccountManager.Instance().addFriendHandler -= AddFriendHandler;
+            AccountManager.Instance().getFriendsHandler -= friendsList.ReloadData;
         }
 
         private void Start()
         {
             addField.gameObject.SetActive(false);
+            AccountManager.Instance().GetFriends();
             friendsList.SetFriends(AccountManager.Instance().friends);
         }
 

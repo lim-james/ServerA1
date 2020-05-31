@@ -22,7 +22,8 @@ namespace Photon.Pun
         public List<string> chat { get; private set; }
 
         public UnityAction<bool, string> loginHandler;
-        public UnityAction<bool, string> addHandler;
+        public UnityAction<bool, string> addFriendHandler;
+        public UnityAction getFriendsHandler;
 
         AccountManager()
         {
@@ -41,6 +42,7 @@ namespace Photon.Pun
         private void OnEvent(EventData obj)
         {
             Events e = (Events)obj.Code;
+
             if (e == Events.LOGIN)
             {
                 Debug.Log("Got login event");
@@ -48,14 +50,25 @@ namespace Photon.Pun
                 bool success = (bool)data[0];
                 string message = (string)data[1];
                 if (!success) username = "";
-                loginHandler.Invoke(success, message); 
-            } 
+                loginHandler.Invoke(success, message);
+            }
             else if (e == Events.ADD_FRIEND)
             {
                 object[] data = (object[])obj.CustomData;
                 bool success = (bool)data[0];
                 string message = (string)data[1];
-                addHandler.Invoke(success, message); 
+                addFriendHandler.Invoke(success, message);
+            }
+            else if (e == Events.GET_FRIENDS)
+            {
+                object[] data = (object[])obj.CustomData;
+                int count = (int)data[0];
+
+                friends.Clear();
+                for (int i = 1; i <= count; ++i)
+                    friends.Add((string)data[i]);
+
+                getFriendsHandler.Invoke();
             }
         }
 
@@ -66,17 +79,22 @@ namespace Photon.Pun
             PhotonNetwork.RaiseEvent((int)Events.LOGIN, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
+        public void GetFriends()
+        {
+            PhotonNetwork.RaiseEvent((int)Events.GET_FRIENDS, username, RaiseEventOptions.Default, SendOptions.SendReliable);
+        }
+
         public void AddUser(string name)
         {
             if (name == "")
             {
-                addHandler.Invoke(true, "");
+                addFriendHandler.Invoke(true, "");
                 return;
             }
 
             if (name == username)
             {
-                addHandler.Invoke(false, "Can't add yourself.");
+                addFriendHandler.Invoke(false, "Can't add yourself.");
                 return;
             }
 
