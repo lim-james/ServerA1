@@ -14,8 +14,6 @@ namespace Photon.Pun
 
         [SerializeField]
         private InventoryManager manager;
-        [SerializeField]
-        private GridManager grid;
 
         private PlayerMovement movement;
 
@@ -80,17 +78,19 @@ namespace Photon.Pun
                 Pickup();
 
             if (Input.GetKeyDown(KeyCode.Q))
-                Drop();
+                Place();
         }
 
         private void OnEvent(EventData obj)
         {
             Events e = (Events)obj.Code;
-
+            
             if (e == Events.GET_INVENTORY)
                 InventoryHandler((object[])obj.CustomData);
             else if (e == Events.PICKUP_ITEM)
                 PickupHandler((object[])obj.CustomData);
+            else if (e == Events.PLACE_ITEM)
+                PlaceHandler((object[])obj.CustomData);
         }
 
         private void InventoryHandler(object[] data)
@@ -104,10 +104,17 @@ namespace Photon.Pun
         {
             if (items[index] >= 0)
                 return;
-
-            Debug.Log("Picking up");
+            
             Vector3 target = transform.position + movement.direction;
-            grid.PickItem(username, index, target);
+
+            object[] data = new object[] {
+                username,
+                index,
+                (int)target.x,
+                (int)target.y
+            };
+
+            PhotonNetwork.RaiseEvent((int)Events.PICKUP_ITEM, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
         private void PickupHandler(object[] data)
@@ -115,9 +122,7 @@ namespace Photon.Pun
             bool succcess = (bool)data[0];
             int i = (int)data[1];
             int itemId = (int)data[2];
-
-            Debug.Log(String.Format("Picked up {0}, {1}, {2}", succcess, i, itemId));
-
+            
             if (succcess)
             {
                 items[i] = itemId;
@@ -125,27 +130,35 @@ namespace Photon.Pun
             }
         }
 
-        private void Drop()
+        private void Place()
         {
             if (items[index] < 0)
                 return;
-
+            
             Vector3 target = transform.position + movement.direction;
+            
+            object[] data = new object[] {
+                username,
+                index,
+                items[index],
+                (int)target.x,
+                (int)target.y
+            };
 
-            if (!grid.PlaceItem(target, items[index]))
-                return;
-
-            items[index] = -1;
-
-            // TODO - Update player inventory in db
-            String sqlCmd = String.Format(
-                "UPDATE Main.Inventory SET item{0}={1} WHERE username='{2}';",
-                index, -1, username
-            );
-            Debug.Log(sqlCmd);
-
-            manager.ReloadData();
+            PhotonNetwork.RaiseEvent((int)Events.PLACE_ITEM, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
+        private void PlaceHandler(object[] data)
+        {
+            bool succcess = (bool)data[0];
+            int index = (int)data[1];
+
+            if (succcess)
+            {
+                items[index] = -1;
+                manager.ReloadData();
+            }
+        }
+        
     }
 }

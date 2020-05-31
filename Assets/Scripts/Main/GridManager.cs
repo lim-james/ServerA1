@@ -42,6 +42,10 @@ namespace Photon.Pun
 
             if (e == Events.GET_WORLD)
                 GetWorldHandler((object[])obj.CustomData);
+            else if (e == Events.REMOVE_ITEM)
+                RemoveHandler((object[])obj.CustomData);
+            else if (e == Events.CREATE_ITEM)
+                CreateHandler((object[])obj.CustomData);
         }
         
         private void GetWorldHandler(object[] data)
@@ -59,38 +63,26 @@ namespace Photon.Pun
             }
         }
 
-        public bool HasItem(Vector2 position)
+        private void RemoveHandler(object[] data)
         {
-            int x = (int)position.x;
-            int y = (int)position.y;
+            int x = (int)data[0];
+            int y = (int)data[1];
 
-            // SELECT item_id FROM Main.World WHERE x=x AND y=y;
-            String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
-            Debug.Log(sqlCmd);
-
-            //if (!items.ContainsKey(x) || !items[x].ContainsKey(y))
-            //    return false;
-
-            return false;// items[x][y] >= 0;
+            RemoveItem(x, y);
         }
 
-        public bool ItemAt(Vector2 position, out int item)
+        private void CreateHandler(object[] data)
         {
-            item = -1;
+            int x = (int)data[0];
+            int y = (int)data[1];
+            int item = (int)data[2];
 
-            int x = (int)position.x;
-            int y = (int)position.y;
+            CreateItem(x, y, item);
+        }
 
-            // SELECT item_id FROM Main.World WHERE x=x AND y=y;
-            String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
-            Debug.Log(sqlCmd);
-
-            //if (!items.ContainsKey(x) || !items[x].ContainsKey(y))
-            //    return false;
-
-            //item = items[x][y];
-
-            return false;// item >= 0;
+        private void RemoveItem(int x, int y)
+        {
+            Destroy(objects[x][y]);
         }
 
         private void CreateItem(int x, int y, int item)
@@ -106,46 +98,6 @@ namespace Photon.Pun
                 objects.Add(x, new Dictionary<int, GameObject>());
 
             objects[x][y] = go;
-        }
-
-        public bool PlaceItem(Vector2 position, int item)
-        {
-            bool result = HasItem(position);
-
-            if (!result)
-            {
-                int x = (int)position.x;
-                int y = (int)position.y;
-
-                //GameObject go = Instantiate(itemPrefab);
-                //go.transform.position = position;
-                //go.transform.SetParent(itemContainer);
-                //go.GetComponent<SpriteRenderer>().color = itemGroup.colors[item];
-
-                //if (!objects.ContainsKey(x))
-                //    objects.Add(x, new Dictionary<int, GameObject>());
-
-                //objects[x][y] = go;
-
-                // TODO - Insert item into world db
-                // INSERT INTO Main.World(item_id, x, y) VALUES (go, x, y);
-                String sqlCmd = String.Format("INSERT INTO Main.World(item_id, x, y) VALUES ({0}, {1}, {2});", item, x, y);
-                Debug.Log(sqlCmd);
-            }
-
-            return !result;
-        }
-
-        public void PickItem(string username, int index, Vector2 position)
-        {
-            object[] data = new object[] {
-                username,
-                index,
-                (int)position.x,
-                (int)position.y
-            };
-
-            PhotonNetwork.RaiseEvent((int)Events.PICKUP_ITEM, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
     }
 }
