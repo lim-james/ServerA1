@@ -16,12 +16,14 @@ namespace Photon.Pun
         private void Awake()
         {
             AccountManager.Instance().addFriendHandler += AddFriendHandler;
+            AccountManager.Instance().removeFriendHandler += friendsList.ReloadData;
             AccountManager.Instance().getFriendsHandler += friendsList.ReloadData;
         }
 
         private void OnDestroy()
         {
             AccountManager.Instance().addFriendHandler -= AddFriendHandler;
+            AccountManager.Instance().removeFriendHandler -= friendsList.ReloadData;
             AccountManager.Instance().getFriendsHandler -= friendsList.ReloadData;
         }
 
@@ -36,7 +38,12 @@ namespace Photon.Pun
 
         public void AddHandler()
         {
-            AccountManager.Instance().AddUser(addField.text);
+            AccountManager.Instance().AddFriend(addField.text);
+        }
+
+        public void RemoveHandler()
+        {
+            AccountManager.Instance().RemoveFriend(addField.text);
         }
 
         private void AddFriendHandler(bool success, string error)
@@ -55,9 +62,15 @@ namespace Photon.Pun
 
         // button handlers     
 
+        public void RefreshButtonHanlder()
+        {
+            AccountManager.Instance().GetFriends();
+        }
+
         public void AddButtonHandler()
         {
             addField.gameObject.SetActive(true);
+            addField.text = "";
         }
     }
 }

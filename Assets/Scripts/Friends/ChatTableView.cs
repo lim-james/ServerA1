@@ -43,6 +43,7 @@ public class ChatTableView : MonoBehaviour
             newCell.gameObject.SetActive(true);
             newCell.SetParent(content);
             newCell.localPosition = position;
+            newCell.localScale = new Vector3(1, 1, 1);
             newCell.GetComponentInChildren<Text>().text = chat[i];
         }
 

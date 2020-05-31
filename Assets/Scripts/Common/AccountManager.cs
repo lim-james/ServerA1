@@ -23,6 +23,7 @@ namespace Photon.Pun
 
         public UnityAction<bool, string> loginHandler;
         public UnityAction<bool, string> addFriendHandler;
+        public UnityAction removeFriendHandler;
         public UnityAction getFriendsHandler;
 
         AccountManager()
@@ -45,11 +46,11 @@ namespace Photon.Pun
 
             if (e == Events.LOGIN)
             {
-                Debug.Log("Got login event");
                 object[] data = (object[])obj.CustomData;
                 bool success = (bool)data[0];
                 string message = (string)data[1];
                 if (!success) username = "";
+                else PhotonNetwork.NickName = username;
                 loginHandler.Invoke(success, message);
             }
             else if (e == Events.ADD_FRIEND)
@@ -65,6 +66,12 @@ namespace Photon.Pun
                 }
                 
                 addFriendHandler.Invoke(success, message);
+            }
+            else if (e == Events.REMOVE_FRIEND)
+            {
+                string name = obj.CustomData.ToString();
+                friends.RemoveAt(friends.IndexOf(name));
+                removeFriendHandler.Invoke();
             }
             else if (e == Events.GET_FRIENDS)
             {
@@ -91,7 +98,7 @@ namespace Photon.Pun
             PhotonNetwork.RaiseEvent((int)Events.GET_FRIENDS, username, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
-        public void AddUser(string name)
+        public void AddFriend(string name)
         {
             if (name == "")
             {
@@ -107,6 +114,15 @@ namespace Photon.Pun
 
             object[] data = new object[] { username, name };
             PhotonNetwork.RaiseEvent((int)Events.ADD_FRIEND, data, RaiseEventOptions.Default, SendOptions.SendReliable);
+        }
+
+        public void RemoveFriend(string name)
+        {
+            if (name == "" || name == username)
+                return;
+
+            object[] data = new object[] { username, name };
+            PhotonNetwork.RaiseEvent((int)Events.REMOVE_FRIEND, data, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
         private string Hash(string rawData)
