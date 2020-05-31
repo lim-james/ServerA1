@@ -3,74 +3,99 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GridManager : MonoBehaviour
+using ExitGames.Client.Photon;
+using Photon.Realtime;
+
+namespace Photon.Pun
 {
-
-    [SerializeField]
-    private ItemGroupObject itemGroup;
-    [SerializeField]
-    private GameObject itemPrefab;
-    [SerializeField]
-    private Transform itemContainer;
-
-    Dictionary<int, Dictionary<int, int>> items;
-    Dictionary<int, Dictionary<int, GameObject>> objects;
-
-    private void Start() 
+    public class GridManager : MonoBehaviour
     {
-        items = new Dictionary<int, Dictionary<int, int>>();
-        objects = new Dictionary<int, Dictionary<int, GameObject>>();
 
-        // SELECT x, y, item_id from Main.World;
-        string sqlCmd = "SELECT x, y, item_id from Main.World;";
-        Debug.Log(sqlCmd);
-    }
+        [SerializeField]
+        private ItemGroupObject itemGroup;
+        [SerializeField]
+        private GameObject itemPrefab;
+        [SerializeField]
+        private Transform itemContainer;
+        
+        Dictionary<int, Dictionary<int, GameObject>> objects;
 
-    public bool HasItem(Vector2 position) 
-    {
-        int x = (int)position.x;
-        int y = (int)position.y;
+        private void Awake()
+        {
+            PhotonNetwork.NetworkingClient.EventReceived += OnEvent;
+        }
 
-        // SELECT item_id FROM Main.World WHERE x=x AND y=y;
-        String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
-        Debug.Log(sqlCmd);
+        private void OnDestroy()
+        {
+            PhotonNetwork.NetworkingClient.EventReceived -= OnEvent;
+        }
 
-        if (!items.ContainsKey(x) || !items[x].ContainsKey(y)) 
-            return false; 
+        private void Start()
+        {
+            objects = new Dictionary<int, Dictionary<int, GameObject>>();
+            PhotonNetwork.RaiseEvent((int)Events.GET_WORLD, "", RaiseEventOptions.Default, SendOptions.SendReliable);
+        }
 
-        return items[x][y] >= 0;
-    }
+        private void OnEvent(EventData obj)
+        {
+            Events e = (Events)obj.Code;
 
-    public bool ItemAt(Vector2 position, out int item) 
-    {
-        item = -1;
+            if (e == Events.GET_WORLD)
+                GetWorldHandler((object[])obj.CustomData);
+        }
+        
+        private void GetWorldHandler(object[] data)
+        {
+            int count = (int)data[0];
 
-        int x = (int)position.x;
-        int y = (int)position.y;
+            for (int i = 0; i < count; ++i)
+            {
+                int index = i * 3 + 1;
+                int x = (Int32)data[index];
+                int y = (Int32)data[index + 1];
+                int item = (Int32)data[index + 2];
+                
+                CreateItem(x, y, item);
+            }
+        }
 
-        // SELECT item_id FROM Main.World WHERE x=x AND y=y;
-        String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
-        Debug.Log(sqlCmd);
-
-        if (!items.ContainsKey(x) || !items[x].ContainsKey(y)) 
-            return false; 
-
-        item = items[x][y];
-        return item >= 0;
-    }
-
-    public bool PlaceItem(Vector2 position, int item) 
-    {
-        bool result = HasItem(position);
-
-        if (!result) 
+        public bool HasItem(Vector2 position)
         {
             int x = (int)position.x;
             int y = (int)position.y;
-            if (!items.ContainsKey(x))
-                items.Add(x, new Dictionary<int, int>());
 
-            items[x][y] = item;
+            // SELECT item_id FROM Main.World WHERE x=x AND y=y;
+            String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
+            Debug.Log(sqlCmd);
+
+            //if (!items.ContainsKey(x) || !items[x].ContainsKey(y))
+            //    return false;
+
+            return false;// items[x][y] >= 0;
+        }
+
+        public bool ItemAt(Vector2 position, out int item)
+        {
+            item = -1;
+
+            int x = (int)position.x;
+            int y = (int)position.y;
+
+            // SELECT item_id FROM Main.World WHERE x=x AND y=y;
+            String sqlCmd = String.Format("SELECT item_id FROM Main.World WHERE x={0} AND y={1};", x, y);
+            Debug.Log(sqlCmd);
+
+            //if (!items.ContainsKey(x) || !items[x].ContainsKey(y))
+            //    return false;
+
+            //item = items[x][y];
+
+            return false;// item >= 0;
+        }
+
+        private void CreateItem(int x, int y, int item)
+        {
+            Vector2 position = new Vector2((float)x, (float)y);
 
             GameObject go = Instantiate(itemPrefab);
             go.transform.position = position;
@@ -81,35 +106,46 @@ public class GridManager : MonoBehaviour
                 objects.Add(x, new Dictionary<int, GameObject>());
 
             objects[x][y] = go;
-
-            // TODO - Insert item into world db
-            // INSERT INTO Main.World(item_id, x, y) VALUES (go, x, y);
-            String sqlCmd = String.Format("INSERT INTO Main.World(item_id, x, y) VALUES ({0}, {1}, {2});", item, x, y);
-            Debug.Log(sqlCmd);
         }
 
-        return !result;
-    }
-
-    public bool PickItem(Vector2 position, out int item) 
-    {
-        bool result = ItemAt(position, out item);
-
-        if (result) 
+        public bool PlaceItem(Vector2 position, int item)
         {
-            Debug.Log("Picking");
-            int x = (int)position.x;
-            int y = (int)position.y;
-            items[x][y] = -1;
+            bool result = HasItem(position);
 
-            Destroy(objects[x][y]);
+            if (!result)
+            {
+                int x = (int)position.x;
+                int y = (int)position.y;
 
-            // TODO - Remove item from world db
-            // DELETE FROM Main.World WHERE x=1 AND y=1;
-            String sqlCmd = String.Format("DELETE FROM Main.World WHERE x={0} AND y={1};", x, y);
-            Debug.Log(sqlCmd);
+                //GameObject go = Instantiate(itemPrefab);
+                //go.transform.position = position;
+                //go.transform.SetParent(itemContainer);
+                //go.GetComponent<SpriteRenderer>().color = itemGroup.colors[item];
+
+                //if (!objects.ContainsKey(x))
+                //    objects.Add(x, new Dictionary<int, GameObject>());
+
+                //objects[x][y] = go;
+
+                // TODO - Insert item into world db
+                // INSERT INTO Main.World(item_id, x, y) VALUES (go, x, y);
+                String sqlCmd = String.Format("INSERT INTO Main.World(item_id, x, y) VALUES ({0}, {1}, {2});", item, x, y);
+                Debug.Log(sqlCmd);
+            }
+
+            return !result;
         }
 
-        return result;
+        public void PickItem(string username, int index, Vector2 position)
+        {
+            object[] data = new object[] {
+                username,
+                index,
+                (int)position.x,
+                (int)position.y
+            };
+
+            PhotonNetwork.RaiseEvent((int)Events.PICKUP_ITEM, data, RaiseEventOptions.Default, SendOptions.SendReliable);
+        }
     }
 }

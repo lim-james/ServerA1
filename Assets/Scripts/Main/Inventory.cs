@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+using ExitGames.Client.Photon;
+using Photon.Realtime;
+
 namespace Photon.Pun
 {
     [RequireComponent(typeof(PlayerMovement))]
@@ -26,6 +29,13 @@ namespace Photon.Pun
         {
             size = 4;
             movement = GetComponent<PlayerMovement>();
+
+            PhotonNetwork.NetworkingClient.EventReceived += OnEvent;
+        }
+
+        private void OnDestroy()
+        {
+            PhotonNetwork.NetworkingClient.EventReceived -= OnEvent;
         }
 
         private void Start()
@@ -37,16 +47,7 @@ namespace Photon.Pun
             for (int i = 0; i < size; ++i)
                 items[i] = -1;
 
-            items[0] = 0;
-            items[1] = 1;
-
-            String sqlCmd = String.Format(
-                "SELECT item0, item1, item2, item3 from Main.Inventory WHERE username='{0}';",
-                username
-            );
-            Debug.Log(sqlCmd);
-
-            manager.ReloadData();
+            PhotonNetwork.RaiseEvent((int)Events.GET_INVENTORY, username, RaiseEventOptions.Default, SendOptions.SendReliable);
         }
 
         private void Update()
@@ -82,24 +83,46 @@ namespace Photon.Pun
                 Drop();
         }
 
+        private void OnEvent(EventData obj)
+        {
+            Events e = (Events)obj.Code;
+
+            if (e == Events.GET_INVENTORY)
+                InventoryHandler((object[])obj.CustomData);
+            else if (e == Events.PICKUP_ITEM)
+                PickupHandler((object[])obj.CustomData);
+        }
+
+        private void InventoryHandler(object[] data)
+        {
+            for (int i = 0; i < size; ++i)
+                items[i] = (Int32)data[i];
+            manager.ReloadData();
+        }
+
         private void Pickup()
         {
             if (items[index] >= 0)
                 return;
 
+            Debug.Log("Picking up");
             Vector3 target = transform.position + movement.direction;
+            grid.PickItem(username, index, target);
+        }
 
-            if (!grid.PickItem(target, out items[index]))
-                return;
+        private void PickupHandler(object[] data)
+        {
+            bool succcess = (bool)data[0];
+            int i = (int)data[1];
+            int itemId = (int)data[2];
 
+            Debug.Log(String.Format("Picked up {0}, {1}, {2}", succcess, i, itemId));
 
-            String sqlCmd = String.Format(
-                "UPDATE Main.Inventory SET item{0}={1} WHERE username='{2}';",
-                index, items[index], username
-            );
-            Debug.Log(sqlCmd);
-
-            manager.ReloadData();
+            if (succcess)
+            {
+                items[i] = itemId;
+                manager.ReloadData();
+            }
         }
 
         private void Drop()

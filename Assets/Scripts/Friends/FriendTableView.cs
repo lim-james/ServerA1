@@ -30,8 +30,6 @@ public class FriendTableView : MonoBehaviour
 
     public void ReloadData()
     {
-        Debug.Log(friends.Count);
-
         Transform[] children = content.GetComponentsInChildren<Transform>();
         for (int i = 1; i < children.Length; ++i)
             Destroy(children[i].gameObject);

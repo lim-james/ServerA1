@@ -1,6 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
+using ExitGames.Client.Photon;
+using Photon.Realtime;
+
 namespace Photon.Pun
 {
     public class PlayerMovement : MonoBehaviour
@@ -9,13 +12,39 @@ namespace Photon.Pun
         public Vector3 direction { get; private set; }
         private string username;
 
+        private void Awake()
+        {
+            PhotonNetwork.NetworkingClient.EventReceived += OnEvent;
+        }
+
+        private void OnDestroy()
+        {
+            PhotonNetwork.NetworkingClient.EventReceived -= OnEvent;
+        }
+
         private void Start()
         {
             // TODO - Update player position in db
             // SELECT x, y from Main.Positions WHERE username='username';
             username = AccountManager.Instance().username;
-            String sqlCmd = String.Format("SELECT x, y from Main.Positions WHERE username='{0}';", username);
-            Debug.Log(sqlCmd);
+            PhotonNetwork.RaiseEvent((int)Events.GET_POSITION, username, RaiseEventOptions.Default, SendOptions.SendReliable);
+        }
+
+        private void OnEvent(EventData obj)
+        {
+            Events e = (Events)obj.Code;
+
+            if (e == Events.GET_POSITION)
+            {
+                GetPositionHandler((object[])obj.CustomData);
+            }
+        }
+
+        private void GetPositionHandler(object[] data)
+        {
+            int x = (int)data[0];
+            int y = (int)data[1];
+            transform.position = new Vector3((float)x, (float)y);
         }
 
         private void Update()
@@ -38,15 +67,14 @@ namespace Photon.Pun
             {
                 direction = newDirection;
                 transform.Translate(direction);
+                
+                object[] data = new object[] {
+                    username,
+                    (int)transform.position.x,
+                    (int)transform.position.y
+                };
 
-                int x = (int)transform.position.x;
-                int y = (int)transform.position.y;
-                // TODO - Update player position in db
-                // UPDATE Main.Positions 
-                // SET x=x, y=y
-                // WHERE username='username';        
-                String sqlCmd = String.Format("UPDATE Main.Positions SET x={0}, y={1} WHERE username='{2}';", x, y, username);
-                Debug.Log(sqlCmd);
+                PhotonNetwork.RaiseEvent((int)Events.UPDATE_POSITION, data, RaiseEventOptions.Default, SendOptions.SendReliable);
             }
         }
     }

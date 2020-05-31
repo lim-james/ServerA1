@@ -57,6 +57,13 @@ namespace Photon.Pun
                 object[] data = (object[])obj.CustomData;
                 bool success = (bool)data[0];
                 string message = (string)data[1];
+
+                if (success)
+                {
+                    friends.Add(message);
+                    message = "";
+                }
+                
                 addFriendHandler.Invoke(success, message);
             }
             else if (e == Events.GET_FRIENDS)
@@ -100,9 +107,6 @@ namespace Photon.Pun
 
             object[] data = new object[] { username, name };
             PhotonNetwork.RaiseEvent((int)Events.ADD_FRIEND, data, RaiseEventOptions.Default, SendOptions.SendReliable);
-
-            Debug.Log("Adding " + name);
-            friends.Add(name);
         }
 
         private string Hash(string rawData)
